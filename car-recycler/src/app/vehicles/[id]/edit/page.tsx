@@ -3,6 +3,8 @@ import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { getVehicleById } from "@/src/db/queries/vehicles";
+import { requireEmployee } from "@/src/lib/auth/employee";
+import { getInventoryDefaults } from "@/src/db/queries/settings";
 
 import { EditVehicleForm } from "./edit-vehicle-form";
 
@@ -15,6 +17,7 @@ interface EditVehiclePageProps {
 export default async function EditVehiclePage({
   params,
 }: EditVehiclePageProps) {
+  await requireEmployee();
   const { id } = await params;
 
   const vehicleId = Number(id);
@@ -41,6 +44,7 @@ export default async function EditVehiclePage({
     condition: vehicle.condition,
     yardLocation: vehicle.yardLocation ?? "",
   };
+  const inventoryDefaults = await getInventoryDefaults();
 
   return (
     <main className="min-h-screen bg-muted/30 p-6">
@@ -68,6 +72,8 @@ export default async function EditVehiclePage({
           <EditVehicleForm
             vehicleId={vehicle.id}
             initialData={initialData}
+            conditionOptions={inventoryDefaults.vehicleConditions}
+            yardLocations={inventoryDefaults.yardLocations}
           />
         </div>
       </div>

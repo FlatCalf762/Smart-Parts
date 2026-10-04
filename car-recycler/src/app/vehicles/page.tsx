@@ -7,9 +7,15 @@ import { Header } from "@/components/layout/header";
 import { VehicleInventory } from "@/components/vehicles/vehicle-inventory";
 
 import { getVehicles } from "../../db/queries/vehicles";
+import { requireEmployee } from "@/src/lib/auth/employee";
+import { getVehicleThumbnailUrls } from "@/src/lib/supabase/vehicle-photos";
 
 export default async function VehiclesPage() {
+  await requireEmployee();
   const vehicles = await getVehicles();
+  const thumbnailUrls = await getVehicleThumbnailUrls(
+    vehicles.map((vehicle) => vehicle.id)
+  );
 
   const vehicleData = vehicles.map((vehicle) => ({
     id: vehicle.id,
@@ -19,6 +25,7 @@ export default async function VehiclesPage() {
     vin: vehicle.vin,
     condition: vehicle.condition,
     yardLocation: vehicle.yardLocation,
+    photoUrl: thumbnailUrls.get(vehicle.id),
   }));
 
   return (

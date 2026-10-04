@@ -1,9 +1,32 @@
 import {
+  boolean,
   integer,
   pgTable,
+  pgEnum,
   text,
   timestamp,
 } from "drizzle-orm/pg-core";
+
+export const employeeRole = pgEnum("employee_role", ["admin", "employee"]);
+
+export const employees = pgTable("employees", {
+  authUserId: text().primaryKey(),
+  email: text().notNull().unique(),
+  fullName: text().notNull(),
+  role: employeeRole().notNull().default("employee"),
+  active: boolean().notNull().default(true),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow().notNull(),
+});
+
+export const inventorySettings = pgTable("inventory_settings", {
+  id: integer().primaryKey().default(1),
+  vehicleConditions: text()
+    .notNull()
+    .default("Pending\nExcellent\nGood\nFair\nPoor"),
+  yardLocations: text().notNull().default(""),
+  updatedAt: timestamp().defaultNow().notNull(),
+});
 
 /**
  * Vehicles stored in the recycler inventory.

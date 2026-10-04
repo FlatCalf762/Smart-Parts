@@ -1,117 +1,111 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Upload } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { uploadVehiclePhoto } from "@/src/app/vehicles/actions";
 
 interface VehiclePhotoUploadProps {
-  onFilesChange?: (files: File[]) => void;
+  vehicleId: number;
 }
 
 export function VehiclePhotoUpload({
-  onFilesChange,
+  vehicleId,
 }: VehiclePhotoUploadProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState("");
 
-  const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) {
+      return;
+    }
 
-  function handleFiles(selectedFiles: FileList | null) {
-    if (!selectedFiles) return;
+    setError("");
+    setStatus("");
+    setIsUploading(true);
 
-    const newFiles = Array.from(selectedFiles);
+    const selectedFiles = Array.from(files);
+    const failures: string[] = [];
+    let uploadedCount = 0;
 
-    const imageFiles = newFiles.filter((file) =>
-      file.type.startsWith("image/"),
-    );
+    try {
+      for (const file of selectedFiles) {
+        const result = await uploadVehiclePhoto(vehicleId, file);
 
-    const combinedFiles = [...files, ...imageFiles];
+        if (!result.success) {
+          failures.push(`${file.name}: ${result.error}`);
+          continue;
+        }
 
-    setFiles(combinedFiles);
+        uploadedCount += 1;
+      }
 
-    onFilesChange?.(combinedFiles);
+      if (uploadedCount > 0) {
+        setStatus(`Uploaded ${uploadedCount} photo${uploadedCount === 1 ? "" : "s"}.`);
+        router.refresh();
+      }
 
-    const newPreviews = imageFiles.map((file) =>
-      URL.createObjectURL(file),
-    );
-
-    setPreviews((previous) => [...previous, ...newPreviews]);
-  }
-
-  function removeFile(index: number) {
-    const updatedFiles = files.filter((_, i) => i !== index);
-    const updatedPreviews = previews.filter((_, i) => i !== index);
-
-    setFiles(updatedFiles);
-    setPreviews(updatedPreviews);
-
-    onFilesChange?.(updatedFiles);
+      setError(failures.join("\n"));
+    } catch {
+      setError("Photo upload failed. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   }
 
   return (
     <div className="space-y-4">
-      {/* Upload area */}
-      <button
-        type="button"
-        onClick={() => inputRef.current?.click()}
-        className="flex min-h-40 w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/25 bg-muted/20 p-6 text-center transition-colors hover:border-muted-foreground/50 hover:bg-muted/40"
+      <div>
+        <h2 className="text-lg font-semibold">Vehicle Photos</h2>
+
+        <p className="text-sm text-muted-foreground">
+          Upload photos of this vehicle.
+        </p>
+      </div>
+
+      <label
+        htmlFor="vehicle-photo-upload"
+        className="flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 text-center transition hover:bg-muted/50"
       >
-        <ImagePlus className="mb-3 h-8 w-8 text-muted-foreground" />
+        <Upload className="mb-3 h-8 w-8 text-muted-foreground" />
 
-        <p className="font-medium">
-          Upload vehicle photos
+        <span className="font-medium">
+          {isUploading ? "Uploading..." : "Upload photos"}
+        </span>
+
+        <span className="mt-1 text-sm text-muted-foreground">
+          PNG, JPG, JPEG, or WebP up to 10 MB
+        </span>
+
+        <input
+          id="vehicle-photo-upload"
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          multiple
+          disabled={isUploading}
+          className="hidden"
+          onChange={(event) => {
+            handleFiles(event.target.files);
+
+            // Allows selecting the same file again later.
+            event.target.value = "";
+          }}
+        />
+      </label>
+
+      {error && (
+        <p className="whitespace-pre-line text-sm text-red-600">
+          {error}
         </p>
+      )}
 
-        <p className="mt-1 text-sm text-muted-foreground">
-          Click to select images
+      {status && (
+        <p className="text-sm text-green-700" role="status">
+          {status}
         </p>
-
-        <p className="mt-2 text-xs text-muted-foreground">
-          JPG, PNG, or WEBP
-        </p>
-      </button>
-
-      <input
-        ref={inputRef}
-        type="file"
-        accept="image/*"
-        multiple
-        className="hidden"
-        onChange={(event) => {
-          handleFiles(event.target.files);
-
-          // Allow selecting the same file again.
-          event.target.value = "";
-        }}
-      />
-
-      {/* Preview images */}
-      {previews.length > 0 && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-          {previews.map((preview, index) => (
-            <div
-              key={preview}
-              className="group relative aspect-video overflow-hidden rounded-lg border bg-muted"
-            >
-              <img
-                src={preview}
-                alt={`Vehicle preview ${index + 1}`}
-                className="h-full w-full object-cover"
-              />
-
-              <Button
-                type="button"
-                variant="destructive"
-                size="icon"
-                className="absolute right-2 top-2 h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
-                onClick={() => removeFile(index)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-        </div>
       )}
     </div>
   );

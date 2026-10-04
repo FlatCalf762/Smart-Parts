@@ -1,51 +1,12 @@
 import Link from "next/link";
-import { ArrowLeft, Car } from "lucide-react";
-
+import { notFound } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { VehiclePhotoUpload } from "@/components/vehicles/vehicle-photo-upload";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
-const vehicles = [
-  {
-    id: 1,
-    year: 2021,
-    make: "Toyota",
-    model: "Camry",
-    vin: "4T1BF1FK5MU123456",
-    condition: "Good",
-    yardLocation: "A-12",
-    mileage: 84321,
-    color: "Silver",
-    engine: "2.5L 4-Cylinder",
-    transmission: "Automatic",
-  },
-  {
-    id: 2,
-    year: 2019,
-    make: "Honda",
-    model: "Civic",
-    vin: "2HGFC2F59KH654321",
-    condition: "Fair",
-    yardLocation: "B-07",
-    mileage: 112450,
-    color: "Black",
-    engine: "2.0L 4-Cylinder",
-    transmission: "CVT",
-  },
-  {
-    id: 4,
-    year: 2022,
-    make: "Ford",
-    model: "F-150",
-    vin: "1FTFW1E50NFA98765",
-    condition: "Excellent",
-    yardLocation: "C-03",
-    mileage: 42100,
-    color: "White",
-    engine: "3.5L V6",
-    transmission: "Automatic",
-  },
-];
+import { VehiclePhotoGallery } from "@/components/vehicles/vehicle-photo-gallery";
+import { getVehicleById } from "@/src/db/queries/vehicles";
+import { requireEmployee } from "@/src/lib/auth/employee";
 
 interface VehicleDetailsPageProps {
   params: Promise<{
@@ -56,30 +17,18 @@ interface VehicleDetailsPageProps {
 export default async function VehicleDetailsPage({
   params,
 }: VehicleDetailsPageProps) {
+  await requireEmployee();
   const { id } = await params;
+  const vehicleId = Number(id);
 
-  const vehicle = vehicles.find((vehicle) => vehicle.id === Number(id));
+  if (!Number.isInteger(vehicleId)) {
+    notFound();
+  }
+
+  const vehicle = await getVehicleById(vehicleId);
 
   if (!vehicle) {
-    return (
-      <main className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold">Vehicle Not Found</h1>
-
-          <p className="mt-2 text-muted-foreground">
-            No vehicle exists with ID {id}.
-          </p>
-
-          <Link
-            href="/vehicles"
-            className="mt-6 inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Vehicles
-          </Link>
-        </div>
-      </main>
-    );
+    notFound();
   }
 
   return (
@@ -110,16 +59,20 @@ export default async function VehicleDetailsPage({
             </p>
           </div>
 
-          <Button>Edit Vehicle</Button>
+          <Link
+            href={`/vehicles/${vehicle.id}/edit`}
+            className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+          >
+            Edit Vehicle
+          </Link>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Vehicle Photo */}
           <Card className="lg:col-span-2">
-            <CardContent className="p-0">
-              <div className="flex aspect-video items-center justify-center rounded-lg bg-muted">
-                <Car className="h-20 w-20 text-muted-foreground" />
-              </div>
+            <CardContent className="space-y-6 p-6">
+              <VehiclePhotoUpload vehicleId={vehicle.id} />
+              <VehiclePhotoGallery vehicleId={vehicle.id} />
             </CardContent>
           </Card>
 
@@ -133,28 +86,30 @@ export default async function VehicleDetailsPage({
               <div>
                 <p className="text-sm text-muted-foreground">Mileage</p>
                 <p className="font-medium">
-                  {vehicle.mileage.toLocaleString()} miles
+                  {vehicle.mileage !== null
+                    ? `${vehicle.mileage.toLocaleString()} miles`
+                    : "Not provided"}
                 </p>
               </div>
 
               <div>
                 <p className="text-sm text-muted-foreground">Color</p>
-                <p className="font-medium">{vehicle.color}</p>
+                <p className="font-medium">{vehicle.color ?? "Not provided"}</p>
               </div>
 
               <div>
                 <p className="text-sm text-muted-foreground">Engine</p>
-                <p className="font-medium">{vehicle.engine}</p>
+                <p className="font-medium">{vehicle.engine ?? "Not provided"}</p>
               </div>
 
               <div>
                 <p className="text-sm text-muted-foreground">Transmission</p>
-                <p className="font-medium">{vehicle.transmission}</p>
+                <p className="font-medium">{vehicle.transmission ?? "Not provided"}</p>
               </div>
 
               <div>
                 <p className="text-sm text-muted-foreground">Yard Location</p>
-                <p className="font-medium">{vehicle.yardLocation}</p>
+                <p className="font-medium">{vehicle.yardLocation ?? "Not provided"}</p>
               </div>
             </CardContent>
           </Card>

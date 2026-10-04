@@ -13,11 +13,15 @@ import { updateVehicle } from "../../actions";
 interface EditVehicleFormProps {
   vehicleId: number;
   initialData: VehicleFormData;
+  conditionOptions: string[];
+  yardLocations: string[];
 }
 
 export function EditVehicleForm({
   vehicleId,
   initialData,
+  conditionOptions,
+  yardLocations,
 }: EditVehicleFormProps) {
   const router = useRouter();
 
@@ -68,6 +72,8 @@ export function EditVehicleForm({
     <>
       <VehicleForm
         initialData={initialData}
+        conditionOptions={conditionOptions}
+        yardLocations={yardLocations}
         onSubmit={handleSubmit}
       />
 

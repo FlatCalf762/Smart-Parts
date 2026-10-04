@@ -10,6 +10,7 @@ import {
   LogOut,
   Recycle,
 } from "lucide-react";
+import { signOut } from "@/src/app/auth/actions";
 
 const navigation = [
   {
@@ -50,7 +51,7 @@ export function Sidebar() {
       <nav className="flex-1 space-y-1 p-4">
         {navigation.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href;
+          const active = pathname.startsWith(item.href);
 
           return (
             <Link
@@ -73,16 +74,21 @@ export function Sidebar() {
       <div className="border-t p-4">
         <Link
           href="/settings"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm ${pathname.startsWith("/settings") ? "bg-green-100 text-green-700" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}
         >
           <Settings className="h-5 w-5" />
           Settings
         </Link>
 
-        <button className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground">
-          <LogOut className="h-5 w-5" />
-          Logout
-        </button>
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="mt-1 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <LogOut className="h-5 w-5" />
+            Sign out
+          </button>
+        </form>
       </div>
     </aside>
   );

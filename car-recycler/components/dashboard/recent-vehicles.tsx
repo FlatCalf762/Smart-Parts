@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Car } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -10,9 +11,13 @@ import {
 } from "@/components/ui/card";
 
 import { getVehicles } from "@/src/db/queries/vehicles";
+import { getVehicleThumbnailUrls } from "@/src/lib/supabase/vehicle-photos";
 
 export async function RecentVehicles() {
   const vehicles = await getVehicles();
+  const thumbnailUrls = await getVehicleThumbnailUrls(
+    vehicles.slice(0, 5).map((vehicle) => vehicle.id)
+  );
 
   return (
     <Card>
@@ -57,7 +62,18 @@ export async function RecentVehicles() {
               >
                 <div className="flex items-center gap-4">
                   <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-muted">
-                    <Car className="h-5 w-5 text-muted-foreground" />
+                    {thumbnailUrls.get(vehicle.id) ? (
+                      <Image
+                        src={thumbnailUrls.get(vehicle.id)!}
+                        alt={`${vehicle.year} ${vehicle.make} ${vehicle.model}`}
+                        width={44}
+                        height={44}
+                        className="h-full w-full rounded-lg object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <Car className="h-5 w-5 text-muted-foreground" />
+                    )}
                   </div>
 
                   <div>

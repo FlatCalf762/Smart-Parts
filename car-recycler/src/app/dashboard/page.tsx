@@ -6,8 +6,10 @@ import { Header } from "@/components/layout/header";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { RecentVehicles } from "@/components/dashboard/recent-vehicles";
 import { getVehicleStats } from "@/src/db/queries/vehicles";
+import { requireEmployee } from "@/src/lib/auth/employee";
 
 export default async function DashboardPage() {
+  await requireEmployee();
   const stats = await getVehicleStats();
 
   return (

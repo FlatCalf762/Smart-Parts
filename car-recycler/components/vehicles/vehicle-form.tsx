@@ -18,8 +18,12 @@ export interface VehicleFormData {
 
 interface VehicleFormProps {
   initialData?: VehicleFormData;
+  conditionOptions?: string[];
+  yardLocations?: string[];
   onSubmit?: (data: VehicleFormData) => void | Promise<void>;
 }
+
+const defaultConditionOptions = ["pending", "excellent", "good", "fair", "poor"];
 
 const defaultFormData: VehicleFormData = {
   vin: "",
@@ -36,11 +40,16 @@ const defaultFormData: VehicleFormData = {
 
 export function VehicleForm({
   initialData,
+  conditionOptions = defaultConditionOptions,
+  yardLocations = [],
   onSubmit,
 }: VehicleFormProps) {
   const [formData, setFormData] = useState<VehicleFormData>(
     initialData ?? defaultFormData
   );
+  const availableConditions = conditionOptions.includes(formData.condition)
+    ? conditionOptions
+    : [formData.condition, ...conditionOptions];
 
   function updateField(
     field: keyof VehicleFormData,
@@ -225,11 +234,11 @@ export function VehicleForm({
               }
               className="mt-2 flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm"
             >
-              <option value="pending">Pending</option>
-              <option value="excellent">Excellent</option>
-              <option value="good">Good</option>
-              <option value="fair">Fair</option>
-              <option value="poor">Poor</option>
+              {availableConditions.map((condition) => (
+                <option key={condition} value={condition}>
+                  {condition.charAt(0).toUpperCase() + condition.slice(1)}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -240,6 +249,7 @@ export function VehicleForm({
 
             <input
               value={formData.yardLocation}
+              list="vehicle-yard-locations"
               onChange={(event) =>
                 updateField(
                   "yardLocation",
@@ -249,6 +259,11 @@ export function VehicleForm({
               className="mt-2 flex h-10 w-full rounded-md border bg-background px-3 py-2 text-sm"
               placeholder="A-12"
             />
+            <datalist id="vehicle-yard-locations">
+              {yardLocations.map((location) => (
+                <option key={location} value={location} />
+              ))}
+            </datalist>
           </div>
         </div>
       </div>
